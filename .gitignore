@@ -369,6 +369,3 @@ FodyWeavers.xsd
 
 # Personal readme file for notes
 /src/pdbMate/README.Personal.md
-
-# Exclude tests for now
-/tests/*
