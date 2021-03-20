@@ -35,3 +35,7 @@ What does the rename function do?
 - Determine duplicate filenames
 - Moving and renaming files depending on your settings from FilenameTemplate and FolderTemplate in appsettings.json.
 - Deleting duplicates and unused files (small files etc.)
+
+### Best use-case
+
+- 
