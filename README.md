@@ -22,7 +22,12 @@ Install .NET framework 5.0 Runtime
 
 https://dotnet.microsoft.com/download/dotnet/5.0/runtime
 
-Rename the appsettings.Template.json to appsettings.json and configure to your needs.
+If build from source: Rename the appsettings.Template.json to appsettings.json 
+
+Configure appsettings.json to your needs:
+- define sourcefolders (folders that are recursively searched for videos to rename)
+- define on targetfolder (your files will be moved to this folder)
+- get an api key and fill out PdbApi -> ApiKey
 
 # How to use
 
