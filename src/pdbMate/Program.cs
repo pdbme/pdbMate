@@ -37,12 +37,19 @@ namespace pdbMate
 
         }
 
+        [Verb("test", HelpText = "do a test.")]
+        private class TestOptions : BaseOptions
+        {
+
+        }
+
         private static int Main(string[] args)
         {
-            return Parser.Default.ParseArguments<AddOptions, RenameOptions>(args)
+            return Parser.Default.ParseArguments<AddOptions, RenameOptions, TestOptions>(args)
                 .MapResult(
                     (AddOptions opts) => RunApp(args, opts, AppAction.Add),
                     (RenameOptions opts) => RunApp(args, opts, AppAction.Rename),
+                    (TestOptions opts) => RunApp(args, opts, AppAction.Test),
                     HandleParseError);
         }
 
@@ -74,18 +81,22 @@ namespace pdbMate
                 try
                 {
                     var myApplication = provider.GetRequiredService<IApplication>();
+                    if (options.DryRun)
+                    {
+                        Log.Information("DryRun is activated! Nothing will be made permanent.");
+                    }
+
                     if (action == AppAction.Rename)
                     {
-                        if (options.DryRun)
-                        {
-                            Log.Information("DryRun is activated! Nothing will be made permanent.");
-                        }
-
                         return myApplication.Rename(options.DryRun) ? (int)ExitCode.Success : (int) ExitCode.ApplicationError;
                     }
                     else if (action == AppAction.Add)
                     {
                         //myApplication.Add(options.DryRun);
+                    }
+                    else if (action == AppAction.Test)
+                    {
+                        return myApplication.Test(options.DryRun) ? (int)ExitCode.Success : (int)ExitCode.ApplicationError;
                     }
                 }
                 catch (Exception ex)
@@ -119,6 +130,8 @@ namespace pdbMate
                     services.AddOptions();
                     services.AddPdbApiService(_configuration.GetSection("PdbApi"));
                     services.AddRenameService(_configuration.GetSection("Rename"));
+                    services.AddNzbgetService(_configuration.GetSection("Nzbget"));
+                    services.AddSabnzbdService(_configuration.GetSection("Sabnzbd"));
 
                     services.AddScoped<IApplication, Application>();
                 }).UseSerilog();
@@ -127,7 +140,8 @@ namespace pdbMate
     internal enum AppAction
     {
         Rename = 0,
-        Add = 1
+        Add = 1,
+        Test = 2
     }
 
     internal enum ExitCode

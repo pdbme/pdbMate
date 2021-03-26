@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "pdbMate": {
+      "commandName": "Project",
+      "commandLineArgs": "test"
+    }
+  }
+}
