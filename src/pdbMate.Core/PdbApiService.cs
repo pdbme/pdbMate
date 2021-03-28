@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -75,7 +74,7 @@ namespace pdbMate.Core
                 .AddQueryParameter("limit", "100000")
                 .AddQueryParameter("pornsite", site.Id.ToString());
 
-            var responseActors = client.Get<List<PdbApiPornstar>>(requestActors);
+            var responseActors = client.Get<List<Actor>>(requestActors);
             var actorsReturned = responseActors.Data;
 
             List<Video> videos = new List<Video>();
@@ -90,7 +89,7 @@ namespace pdbMate.Core
                         actors.Add(new Actor()
                         {
                             Id = actorFound.Id,
-                            Actorname = actorFound.Starname,
+                            Actorname = actorFound.Actorname,
                             Gender = actorFound.Gender
                         });
                     }
@@ -104,7 +103,7 @@ namespace pdbMate.Core
                         actors.Add(new Actor()
                         {
                             Id = actorFound.Id,
-                            Actorname = actorFound.Starname,
+                            Actorname = actorFound.Actorname,
                             Gender = actorFound.Gender
                         });
                     }
@@ -128,6 +127,44 @@ namespace pdbMate.Core
 
             return videos;
         }
+
+        public List<Actor> GetFavoriteActors()
+        {
+            var request = new RestRequest("api/myactors", DataFormat.Json);
+
+            var response= client.Get<List<Actor>>(request);
+            return response?.Data;
+        }
+
+        public List<Site> GetFavoriteSites()
+        {
+            var request = new RestRequest("api/mysites", DataFormat.Json);
+
+            var response = client.Get<List<Site>>(request);
+            return response?.Data;
+        }
+        /*
+        public List<int> GetReleases(int page, int take, int? actor, string search)
+        {
+            var request = new RestRequest("api/usenet/releases", DataFormat.Json)
+                .AddQueryParameter("page", page.ToString())
+                .AddQueryParameter("take", take.ToString());
+
+            if (actor != null)
+            {
+                request.AddQueryParameter("actor", actor.Value.ToString());
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                request.AddQueryParameter("search", search);
+            }
+
+            var response = client.Get<List<PdbApiSite>>(request);
+            var sitesReturned = response.Data;
+            return sitesReturned.Any() ? sitesReturned.Select(x => x.Id).ToList() : new List<int>();
+        }
+        */
     }
 
     internal class PdbApiPornvideo
@@ -144,12 +181,5 @@ namespace pdbMate.Core
         public int SceneRelease { get; set; }
         public string PreviewImageUrl { get; set; }
         public string PreviewVideoUrl { get; set; }
-    }
-
-    internal class PdbApiPornstar
-    {
-        public int Id { get; set; }
-        public string Starname { get; set; }
-        public int Gender { get; set; }
     }
 }

@@ -8,5 +8,7 @@ namespace pdbMate.Core
         List<VideoQuality> GetAllVideoQuality();
         List<Site> GetSites();
         List<Video> GetVideosBySite(Site site);
+        List<Actor> GetFavoriteActors();
+        List<Site> GetFavoriteSites();
     }
 }
