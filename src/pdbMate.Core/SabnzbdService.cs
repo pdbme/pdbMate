@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
+﻿using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using pdbMate.Core.Data;
-using pdbMate.Core.Data.Nzbget;
 using pdbMate.Core.Data.Sabnzbd;
 using RestSharp;
 using RestSharp.Serializers.SystemTextJson;
@@ -54,6 +49,20 @@ namespace pdbMate.Core
             return versionData == null ? "" : versionData.Version;
         }
 
+        public string AddDownload(string url)
+        {
+            var request = new RestRequest("/", DataFormat.Json);
+            request.AddQueryParameter("mode", "addurl");
+            request.AddQueryParameter("output", "json");
+            request.AddQueryParameter("apikey", options.ApiKey);
+            request.AddQueryParameter("name", url);
+
+            var response = client.Get<SabnzbdResult>(request);
+            var versionData = response.Data;
+
+            return versionData == null ? "" : versionData.Version;
+        }
+
         public SabnzbdQueue GetQueue(int start, int limit)
         {
             var request = new RestRequest("/", DataFormat.Json);
@@ -82,6 +91,11 @@ namespace pdbMate.Core
             var data = response.Data;
 
             return data?.History;
+        }
+
+        public bool IsActive()
+        {
+            return options.IsActive;
         }
     }
 }

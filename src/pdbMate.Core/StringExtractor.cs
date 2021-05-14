@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 
 namespace pdbMate.Core
@@ -63,6 +64,17 @@ namespace pdbMate.Core
             return "";
         }
 
+        public static string ExtractPrefixBeforeQualityAndReleasegroup(string title)
+        {
+            Match matchTeamname = Regex.Match(title, @"(.*)\.XXX\.(2160p|1080p|720p|480)\.(MP4|WMV|MKV)-([a-z0-9]+)", RegexOptions.IgnoreCase);
+            if (matchTeamname.Success)
+            {
+                return matchTeamname.Groups[1].Value;
+            }
+
+            return "";
+        }
+
 
         public static string ExtractEpisode(string title)
         {
@@ -91,6 +103,25 @@ namespace pdbMate.Core
             }
 
             return "";
+        }
+
+        public static string GetSeparator(string name)
+        {
+            var countPoint = name.Split('.').Length - 1;
+            var countWhitespace = name.Split(' ').Length - 1;
+            var countMinus = name.Split('-').Length - 1;
+
+            if (countMinus > countWhitespace && countMinus > countPoint)
+            {
+                return "-";
+            }
+
+            if (countPoint > countWhitespace && countPoint > countMinus)
+            {
+                return ".";
+            }
+
+            return " ";
         }
     }
 }

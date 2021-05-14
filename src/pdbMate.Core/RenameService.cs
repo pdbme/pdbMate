@@ -16,8 +16,6 @@ namespace pdbMate.Core
         private readonly IVideoQualityProdiver videoQualityProdiver;
         private readonly RenameServiceOptions renameServiceOptions;
 
-        private List<Site> siteListInternal;
-
         public RenameService(ILogger<IRenameService> logger, IPdbApiService pdbApi, IVideoQualityProdiver videoQualityProdiver, IOptions<RenameServiceOptions> renameServiceOptions)
         {
             this.logger = logger;
@@ -301,11 +299,14 @@ namespace pdbMate.Core
                 {
                     foreach (var foundMatchingVideo in foundMatchingVideos)
                     {
-                        string firstWord = foundMatchingVideo.Title.Substring(0,
-                            foundMatchingVideo.Title.IndexOf(" ", StringComparison.InvariantCulture));
-                        if (title.Contains(firstWord))
+                        var firstwordLength = foundMatchingVideo.Title.IndexOf(" ", StringComparison.InvariantCulture);
+                        if (firstwordLength > 0)
                         {
-                            return foundMatchingVideo;
+                            var firstWord = foundMatchingVideo.Title.Substring(0, firstwordLength);
+                            if (title.Contains(firstWord))
+                            {
+                                return foundMatchingVideo;
+                            }
                         }
                     }
                 }
@@ -367,7 +368,7 @@ namespace pdbMate.Core
 
         private List<Site> GetSites()
         {
-            return siteListInternal ??= pdbApi.GetSites();
+            return pdbApi.GetSites();
         }
 
         private readonly Dictionary<int, List<Video>> cachedVideosBySite = new Dictionary<int, List<Video>>();

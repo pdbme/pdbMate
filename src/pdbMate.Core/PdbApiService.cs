@@ -14,6 +14,10 @@ namespace pdbMate.Core
         private readonly PdbApiServiceOptions options;
         private readonly RestClient client;
 
+        private List<Site> cachedSites;
+        private List<UsenetIndexer> cachedIndexers;
+        private readonly Dictionary<int,List<Video>> cachedVideos;
+
         public PdbApiService(ILogger<IPdbApiService> logger, IOptions<PdbApiServiceOptions> options)
         {
             this.logger = logger;
@@ -21,29 +25,31 @@ namespace pdbMate.Core
 
             client = new RestClient(this.options.BaseUrl);
             client.AddDefaultHeader("X-PORNDB-APIKEY", this.options.Apikey);
+
+            cachedVideos = new Dictionary<int, List<Video>>();
         }
 
         public List<VideoQuality> GetAllVideoQuality()
         {
             List<VideoQuality> videoQuality = new List<VideoQuality> {
                 new VideoQuality() {
-                    Id = 0, Name = "Unknown", SimplifiedName = "Unknown"
+                    Id = 0, Name = "Unknown", SimplifiedName = "Unknown", BetterQualityOrdinal = 0
                 },
                 new VideoQuality()
                 {
-                    Id = 1, Name = "720p", SimplifiedName = "720p"
+                    Id = 1, Name = "720p", SimplifiedName = "720p", BetterQualityOrdinal = 2
                 },
                 new VideoQuality()
                 {
-                    Id = 2, Name = "1080p", SimplifiedName = "1080p"
+                    Id = 2, Name = "1080p", SimplifiedName = "1080p", BetterQualityOrdinal = 3
                 },
                 new VideoQuality()
                 {
-                    Id = 3, Name = "2160p", SimplifiedName = "2160p"
+                    Id = 3, Name = "2160p", SimplifiedName = "2160p", BetterQualityOrdinal = 4
                 },
                 new VideoQuality()
                 {
-                    Id = 4, Name = "480p", SimplifiedName = "480p"
+                    Id = 4, Name = "480p", SimplifiedName = "480p", BetterQualityOrdinal = 1
                 }
             };
 
@@ -52,16 +58,23 @@ namespace pdbMate.Core
 
         public List<Site> GetSites()
         {
+            if (cachedSites != null) return cachedSites;
 
             var request = new RestRequest("api/pornsites", DataFormat.Json)
                 .AddQueryParameter("limit", "100000");
 
             var response = client.Get<List<Site>>(request);
-            return response.Data;
+            cachedSites = response.Data;
+
+            return cachedSites;
         }
 
         public List<Video> GetVideosBySite(Site site)
         {
+            if (cachedVideos.ContainsKey(site.Id))
+            {
+                return cachedVideos[site.Id];
+            }
 
             var request = new RestRequest("api/pornvideos", DataFormat.Json)
                 .AddQueryParameter("limit", "100000")
@@ -125,6 +138,7 @@ namespace pdbMate.Core
                 videos.Add(video);
             }
 
+            cachedVideos.Add(site.Id, videos);
             return videos;
         }
 
@@ -143,14 +157,14 @@ namespace pdbMate.Core
             var response = client.Get<List<Site>>(request);
             return response?.Data;
         }
-        /*
-        public List<int> GetReleases(int page, int take, int? actor, string search)
+        
+        public List<UsenetRelease> GetReleases(int page, int take, int? actor, int? site, string search)
         {
             var request = new RestRequest("api/usenet/releases", DataFormat.Json)
                 .AddQueryParameter("page", page.ToString())
                 .AddQueryParameter("take", take.ToString());
 
-            if (actor != null)
+            if (actor != null && actor != 0)
             {
                 request.AddQueryParameter("actor", actor.Value.ToString());
             }
@@ -160,11 +174,28 @@ namespace pdbMate.Core
                 request.AddQueryParameter("search", search);
             }
 
-            var response = client.Get<List<PdbApiSite>>(request);
-            var sitesReturned = response.Data;
-            return sitesReturned.Any() ? sitesReturned.Select(x => x.Id).ToList() : new List<int>();
+            if (site != null && site != 0)
+            {
+                request.AddQueryParameter("site", site.Value.ToString());
+            }
+
+            var response = client.Get<List<UsenetRelease>>(request);
+            return response?.Data;
         }
-        */
+
+        public List<UsenetIndexer> GetMyIndexer()
+        {
+            if (cachedIndexers != null)
+            {
+                return cachedIndexers;
+            }
+
+            var request = new RestRequest("api/myindexer", DataFormat.Json);
+
+            var response = client.Get<List<UsenetIndexer>>(request);
+            cachedIndexers = response?.Data;
+            return cachedIndexers;
+        }
     }
 
     internal class PdbApiPornvideo

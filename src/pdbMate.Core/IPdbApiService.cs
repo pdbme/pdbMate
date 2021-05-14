@@ -10,5 +10,7 @@ namespace pdbMate.Core
         List<Video> GetVideosBySite(Site site);
         List<Actor> GetFavoriteActors();
         List<Site> GetFavoriteSites();
+        List<UsenetRelease> GetReleases(int page, int take, int? actor, int? site, string search);
+        List<UsenetIndexer> GetMyIndexer();
     }
 }

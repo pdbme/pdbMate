@@ -7,6 +7,6 @@
         public string Username { get; set; }
         public string Password { get; set; }
         public bool UseHttps { get; set; }
-        public bool IsPrimary { get; set; }
+        public bool IsActive { get; set; }
     }
 }

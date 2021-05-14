@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -66,9 +67,7 @@ namespace pdbMate.Core
             var request = new RestRequest("jsonrpc/listgroups", DataFormat.Json);
 
             var response = client.Get<NzbgetResult<List<NzbgetQueue>>>(request);
-            var data = response.Data;
-
-            return data?.Result;
+            return response?.Data?.Result;
         }
 
         public List<NzbgetHistory> GetHistory()
@@ -79,6 +78,41 @@ namespace pdbMate.Core
             var data = response.Data;
 
             return data?.Result;
+        }
+
+        public bool AddDownload(string url)
+        {
+            var paramsArray = new object[] {
+                "",
+                url,
+                "",
+                0,
+                false,
+                false,
+                "",
+                0,
+                "FORCE"
+            };
+            var request = new RestRequest("jsonrpc/append", DataFormat.Json);
+            request.AddJsonBody(new NzbgetRequestAddDownload()
+            {
+                Method = "append",
+                Id = 0,
+                Params = paramsArray
+            });
+
+            var response = client.Post<NzbgetResultAddDownload>(request);
+            if (response.Data.Result > 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool IsActive()
+        {
+            return options.IsActive;
         }
     }
 }

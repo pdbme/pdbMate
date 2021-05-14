@@ -43,13 +43,20 @@ namespace pdbMate
 
         }
 
+        [Verb("download", HelpText = "Autodownload from usenet.")]
+        private class DownloadOptions : BaseOptions
+        {
+
+        }
+
         private static int Main(string[] args)
         {
-            return Parser.Default.ParseArguments<AddOptions, RenameOptions, TestOptions>(args)
+            return Parser.Default.ParseArguments<AddOptions, RenameOptions, TestOptions, DownloadOptions>(args)
                 .MapResult(
                     (AddOptions opts) => RunApp(args, opts, AppAction.Add),
                     (RenameOptions opts) => RunApp(args, opts, AppAction.Rename),
                     (TestOptions opts) => RunApp(args, opts, AppAction.Test),
+                    (DownloadOptions opts) => RunApp(args, opts, AppAction.Download),
                     HandleParseError);
         }
 
@@ -98,6 +105,10 @@ namespace pdbMate
                     {
                         return myApplication.Test(options.DryRun) ? (int)ExitCode.Success : (int)ExitCode.ApplicationError;
                     }
+                    else if (action == AppAction.Download)
+                    {
+                        return myApplication.Download(options.DryRun) ? (int)ExitCode.Success : (int)ExitCode.ApplicationError;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -132,6 +143,7 @@ namespace pdbMate
                     services.AddRenameService(_configuration.GetSection("Rename"));
                     services.AddNzbgetService(_configuration.GetSection("Nzbget"));
                     services.AddSabnzbdService(_configuration.GetSection("Sabnzbd"));
+                    services.AddUsenetDownloadService(_configuration.GetSection("UsenetDownload"));
 
                     services.AddScoped<IApplication, Application>();
                 }).UseSerilog();
@@ -141,7 +153,8 @@ namespace pdbMate
     {
         Rename = 0,
         Add = 1,
-        Test = 2
+        Test = 2,
+        Download = 3
     }
 
     internal enum ExitCode
