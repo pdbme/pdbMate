@@ -44,24 +44,6 @@ namespace pdbMate.Core
 
         public bool Test(bool dryRun)
         {
-            //nzbgetService.CheckConnection();
-            sabnzbdService.AddDownload("https://drunkenslug.com/getnzb/902d469ddc95da4750c5f34bcd786067245a1df0.nzb&i=93754&r=e9437ae410a9eb6becb7e33d7ba2bd42");
-
-            /*
-            nzbgetService.CheckConnection(); 
-            var result = nzbgetService.GetQueue();
-            logger.LogInformation($"Found in queue: {result.Count} entries.");
-            var resultHistory = nzbgetService.GetHistory();
-            logger.LogInformation($"Found in history: {resultHistory.Count} entries.");
-            */
-
-            /*
-            sabnzbdService.CheckConnection();
-            var resultSabnzbd = sabnzbdService.GetQueue(0, 100);
-            logger.LogInformation($"Found in sabnzbd queue: {resultSabnzbd.Slots.Count} entries.");
-            var resultSabnzbdHistory = sabnzbdService.GetHistory(0, 100);
-            logger.LogInformation($"Found in sabnzbd history: {resultSabnzbdHistory?.Slots?.Count} entries.");
-            */
             return true;
         }
 
@@ -84,6 +66,14 @@ namespace pdbMate.Core
             */
 
             usenetDownloadService.Execute(dryRun);
+
+            return true;
+        }
+
+        public bool Autopilot(bool dryRun)
+        {
+            Rename(dryRun);
+            Download(dryRun);
 
             return true;
         }

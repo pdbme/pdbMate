@@ -49,14 +49,21 @@ namespace pdbMate
 
         }
 
+        [Verb("autopilot", HelpText = "Autopilot for usenet.")]
+        private class AutopilotOptions : BaseOptions
+        {
+
+        }
+
         private static int Main(string[] args)
         {
-            return Parser.Default.ParseArguments<AddOptions, RenameOptions, TestOptions, DownloadOptions>(args)
+            return Parser.Default.ParseArguments<AddOptions, RenameOptions, TestOptions, DownloadOptions, AutopilotOptions>(args)
                 .MapResult(
                     (AddOptions opts) => RunApp(args, opts, AppAction.Add),
                     (RenameOptions opts) => RunApp(args, opts, AppAction.Rename),
                     (TestOptions opts) => RunApp(args, opts, AppAction.Test),
                     (DownloadOptions opts) => RunApp(args, opts, AppAction.Download),
+                    (AutopilotOptions opts) => RunApp(args, opts, AppAction.Autopilot),
                     HandleParseError);
         }
 
@@ -109,6 +116,10 @@ namespace pdbMate
                     {
                         return myApplication.Download(options.DryRun) ? (int)ExitCode.Success : (int)ExitCode.ApplicationError;
                     }
+                    else if (action == AppAction.Autopilot)
+                    {
+                        return myApplication.Download(options.DryRun) ? (int)ExitCode.Success : (int)ExitCode.ApplicationError;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -154,7 +165,8 @@ namespace pdbMate
         Rename = 0,
         Add = 1,
         Test = 2,
-        Download = 3
+        Download = 3,
+        Autopilot = 4
     }
 
     internal enum ExitCode
