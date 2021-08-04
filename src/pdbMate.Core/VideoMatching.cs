@@ -126,7 +126,7 @@ namespace pdbMate.Core
         private Site FindSiteByFirstWord(string separator, string name)
         {
             var sites = pdbApi.GetSites();
-            var firstWordBySeparator = name.Substring(0, name.IndexOf(separator, StringComparison.Ordinal));
+            var firstWordBySeparator = !name.Contains(separator) ? "" : name.Substring(0, name.IndexOf(separator, StringComparison.Ordinal));
             if (!string.IsNullOrWhiteSpace(firstWordBySeparator) && firstWordBySeparator.Length >= 3)
             {
                 var siteFound = sites.FirstOrDefault(x => string.Equals(x.Sitename, firstWordBySeparator, StringComparison.CurrentCultureIgnoreCase));
@@ -138,6 +138,5 @@ namespace pdbMate.Core
 
             return null;
         }
-
     }
 }
