@@ -16,6 +16,7 @@ namespace pdbMate.Core
             services.AddScoped<IVideoQualityProdiver, VideoQualityProdiver>();
             services.AddScoped<IDuplicateFinder, DuplicateFinder>();
             services.Configure<RenameServiceOptions>(config);
+            services.AddScoped<IChangeNamingTemplateService, ChangeNamingTemplateService>();
 
             return services;
         }

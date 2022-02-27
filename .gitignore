@@ -363,6 +363,8 @@ FodyWeavers.xsd
 
 # Test json files
 /tests/pdbMate.Core.Tests/settings/pdbapi.json
+/tests/pdbMate.Core.Tests/settings/nzbget.json
+/tests/pdbMate.Core.Tests/settings/sabnzbd.json
 
 # Local appsettings
 /src/pdbMate/appsettings.json

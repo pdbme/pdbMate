@@ -1,5 +1,27 @@
 # pdbMate
 
+## Breaking changes
+pdbMate has been updated to dotnet6
+
+Install
+
+Download the latest release from releases for your operating system:
+
+https://github.com/pdbme/pdbMate/releases
+
+Install .NET framework 6.0 Runtime
+
+https://dotnet.microsoft.com/en-us/download/dotnet/6.0/runtime
+
+If build from source: Rename the appsettings.Template.json to appsettings.json
+
+Configure appsettings.json to your needs:
+
+    define sourcefolders (folders that are recursively searched for videos to rename)
+    define on targetfolder (your files will be moved to this folder)
+    get an api key and fill out PdbApi -> ApiKey
+
+
 ## What does pdbMate do?
 
 pdbMate is a tool with a Command Line Interface (CLI) that performs different tasks to help you handle files downloaded from usenet. 
@@ -14,10 +36,26 @@ Why did we come up with pdbMate: There are no media manager that can sort adult 
 
 You can call the CLI with different functions, for example:
 
+# rename (testing with dryrun)
 pdbMate rename --dryrun
-pdbMate download --dryrun
+
+# rename
+pdbMate rename
+
+# download (sabnzbd)
+pdbMate download
+
+# download (nzbget)
+pdbMate download --client nzbget
+
+# rename and download combined (sabnzbd)
+pdbMate autopilot
+
+# rename and download combined (nzbget)
+pdbMate autopilot --client nzbget
 
 The dryrun parameter means no files will be renamed. So you can check the results before renaming and moving your files.
+The client parameter sets the usenet download client that should be used (sabnzbd or nzbget). Default value for this parameter is sabnzbd.
 
 ### Rename
 
@@ -52,5 +90,50 @@ The major advantage with pdbMate download function in comparison to rss feeds is
 
 Once you configured pdbMate correctly on your downloading machine, you can manage your favorite sites and stars on porndb.me and the rest is done automatically by pdbMate and your usenet downloader.
 
-Configured correctly you now have an autodownload functionality setup for porn from usenet. As far as we know this has never been accompished before. Custom rss feeds where the best option you had until now.
+Configured correctly you now have an automated download functionality setup for porn from usenet. As far as we know this has never been accompished before. Custom rss feeds where the best option you had until now.
 
+## Configuring pdbMate
+
+In the same directory as pbbMate there is a appsettings.Template.json - please rename this file to appsettings.json.
+
+Once renamed, you have to change some settings:
+
+# porndb.me API
+Most importantly you have to replace --MY-OWN-APIKEY-- with your personal api key at porndb.me.
+
+# renaming config
+You should specify one or more SourceFolders. Then you should specify the target folder where the renamed files will be moved to.
+FilenameTemplate and FolderTemplte do not need to be changed, you can edit they to your personal preference if you like.
+
+Examples for FilenameTemplate:
+
+´´´
+{Video.Site.Sitename} - {Video.Title} - {VideoQuality.SimplifiedName}.{PdbId}{FileExtension}
+{Video.ReleasedateShort} - {Video.Title} - {VideoQuality.SimplifiedName}.{PdbId}{FileExtension}
+{OriginalFilename}.{VideoQuality.SimplifiedName}.{PdbId}{FileExtension}
+´´´
+
+Available placeholders:
+´´´
+{Video.Site.Sitename}
+{Video.Site.Id}
+{Video.Id}
+{Video.Title}
+{Video.Releasedate}
+{Video.ReleasedateShort}
+{VideoQuality.SimplifiedName}
+{VideoQuality.Name}
+{FileExtension}
+{PdbId}
+{OriginalFilename}
+´´´
+
+# configure download client
+You can set connection details to your favorite usenet download client. Both clients can be configured but you determine with your command line call arguments (e.g. --client nzbget) which client is used. The default client is sabnzbd.
+
+# configure download settings
+In UsenetDownload you can change:
+- AllowedQualities: You decided which video quality the release must have to be downloaded.
+- KeepOnlyHighestQuality: during renaming and only the highest quality of a release is kept, everything else is considered a duplicate and will be removed
+- DownloadFavoriteActors: In autopilot mode all new releases from your favorite actors will be added to your download client
+- DownloadFavoriteSites: In autopilot mode all new releases from your favorite sites will be added to your download client

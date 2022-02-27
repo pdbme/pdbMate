@@ -1,7 +1,9 @@
-﻿namespace pdbMate.Core
+﻿using pdbMate.Core.Data;
+
+namespace pdbMate.Core
 {
     public interface IUsenetDownloadService
     {
-        void Execute(bool dryRun);
+        void Execute(bool dryRun, DownloadClient client);
     }
 }

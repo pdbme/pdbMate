@@ -17,5 +17,6 @@ namespace pdbMate.Core
 
         List<RenamerResult> CheckForDuplicatesInResults(List<RenamerResult> renamerResults);
         string GetTargetPath();
+        string ReplaceTemplatePlaceholders(string template, RenamerResult v);
     }
 }

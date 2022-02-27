@@ -60,11 +60,11 @@ namespace pdbMate.Core
         {
             if (cachedSites != null) return cachedSites;
 
-            var request = new RestRequest("api/pornsites", DataFormat.Json)
+            var request = new RestRequest("api/pornsites", Method.Get)
                 .AddQueryParameter("limit", "100000");
 
-            var response = client.Get<List<Site>>(request);
-            cachedSites = response.Data;
+            var response = client.GetAsync<List<Site>>(request).GetAwaiter().GetResult();
+            cachedSites = response;
 
             return cachedSites;
         }
@@ -76,19 +76,19 @@ namespace pdbMate.Core
                 return cachedVideos[site.Id];
             }
 
-            var request = new RestRequest("api/pornvideos", DataFormat.Json)
+            var request = new RestRequest("api/pornvideos", Method.Get)
                 .AddQueryParameter("limit", "100000")
                 .AddQueryParameter("pornsite", site.Id.ToString());
 
-            var response = client.Get<List<PdbApiPornvideo>>(request);
-            var videosReturned = response.Data;
+            var response = client.GetAsync<List<PdbApiPornvideo>>(request).GetAwaiter().GetResult();
+            var videosReturned = response;
 
-            var requestActors = new RestRequest("api/actors", DataFormat.Json)
+            var requestActors = new RestRequest("api/actors", Method.Get)
                 .AddQueryParameter("limit", "100000")
                 .AddQueryParameter("pornsite", site.Id.ToString());
 
-            var responseActors = client.Get<List<Actor>>(requestActors);
-            var actorsReturned = responseActors.Data;
+            var responseActors = client.GetAsync<List<Actor>>(requestActors).GetAwaiter().GetResult();
+            var actorsReturned = responseActors;
 
             List<Video> videos = new List<Video>();
             foreach (PdbApiPornvideo videoReturned in videosReturned)
@@ -144,23 +144,23 @@ namespace pdbMate.Core
 
         public List<Actor> GetFavoriteActors()
         {
-            var request = new RestRequest("api/myactors", DataFormat.Json);
+            var request = new RestRequest("api/myactors", Method.Get);
 
-            var response= client.Get<List<Actor>>(request);
-            return response?.Data;
+            var response= client.GetAsync<List<Actor>>(request).GetAwaiter().GetResult();
+            return response;
         }
 
         public List<Site> GetFavoriteSites()
         {
-            var request = new RestRequest("api/mysites", DataFormat.Json);
+            var request = new RestRequest("api/mysites", Method.Get);
 
-            var response = client.Get<List<Site>>(request);
-            return response?.Data;
+            var response = client.GetAsync<List<Site>>(request).GetAwaiter().GetResult();
+            return response;
         }
         
         public List<UsenetRelease> GetReleases(int page, int take, int? actor, int? site, string search)
         {
-            var request = new RestRequest("api/usenet/releases", DataFormat.Json)
+            var request = new RestRequest("api/usenet/releases", Method.Get)
                 .AddQueryParameter("page", page.ToString())
                 .AddQueryParameter("take", take.ToString());
 
@@ -179,8 +179,8 @@ namespace pdbMate.Core
                 request.AddQueryParameter("site", site.Value.ToString());
             }
 
-            var response = client.Get<List<UsenetRelease>>(request);
-            return response?.Data;
+            var response = client.GetAsync<List<UsenetRelease>>(request).GetAwaiter().GetResult();
+            return response;
         }
 
         public List<UsenetIndexer> GetMyIndexer()
@@ -190,10 +190,9 @@ namespace pdbMate.Core
                 return cachedIndexers;
             }
 
-            var request = new RestRequest("api/myindexer", DataFormat.Json);
-
-            var response = client.Get<List<UsenetIndexer>>(request);
-            cachedIndexers = response?.Data;
+            var request = new RestRequest("api/myindexer", Method.Get);
+            var response = client.GetAsync<List<UsenetIndexer>>(request).GetAwaiter().GetResult();
+            cachedIndexers = response;
             return cachedIndexers;
         }
     }

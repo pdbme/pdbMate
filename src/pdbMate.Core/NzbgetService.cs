@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using pdbMate.Core.Data;
 using pdbMate.Core.Data.Nzbget;
 using RestSharp;
-using RestSharp.Serializers.SystemTextJson;
+using RestSharp.Authenticators;
+using RestSharp.Serializers.Json;
 
 namespace pdbMate.Core
 {
@@ -31,6 +30,11 @@ namespace pdbMate.Core
                 authString = this.options.Username + ":" + this.options.Password + "@";
             }
 
+            if (string.IsNullOrEmpty(this.options.Hostname))
+            {
+                return;
+            }
+
             baseUrl = (this.options.UseHttps ? "https://" : "http://") + authString + this.options.Hostname + ":" +
                           this.options.Port;
 
@@ -40,42 +44,60 @@ namespace pdbMate.Core
                 PropertyNameCaseInsensitive = true,
                 WriteIndented = true
             });
+
+            if(!string.IsNullOrEmpty(this.options.Username) || !string.IsNullOrEmpty(this.options.Password))
+            {
+                client.Authenticator = new HttpBasicAuthenticator(this.options.Username, this.options.Password);
+            }
         }
 
-        public bool CheckConnection()
+
+        public void CheckConnection()
         {
-            int version = GetVersion();
-            logger.LogInformation($"Connection to {baseUrl} was {(version > 0 ? "successful" : "not successful")} - Version: {version}");
-            return version > 0;
+            ValidateSettings();
+            GetVersion();
         }
 
         public int GetVersion()
         {
-            var request = new RestRequest("jsonrpc/version", DataFormat.Json);
+            var request = new RestRequest("jsonrpc/version", Method.Get);
 
-            var response = client.Get<NzbgetResult<string>>(request);
-            var versionData = response.Data;
+            var response = client.ExecuteGetAsync<NzbgetResult<string>>(request).GetAwaiter().GetResult();
+            if (response.IsSuccessful)
+            {
+                string versionData = response.Data.Version;
 
-            if (versionData == null)
-                return 0;
+                if (versionData == null)
+                {
+                    throw new ApplicationException("No version returned.");
+                }
 
-            return (double.TryParse(versionData.Result, NumberStyles.Any, CultureInfo.InvariantCulture, out var versionNumber) ? (int) Math.Round(versionNumber) : 0);
+                return (double.TryParse(versionData, NumberStyles.Any, CultureInfo.InvariantCulture, out var versionNumber) ? (int)Math.Round(versionNumber) : 0);
+            }
+
+            var errormessage = "nzbget returned " + response.StatusCode.ToString() + " HTTP-Status-Code. " + response.ErrorMessage;
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                errormessage += " Hint: nzbget probably needs username and password for authentication.";
+            }
+
+            throw new ApplicationException(errormessage);
         }
 
         public List<NzbgetQueue> GetQueue()
         {
-            var request = new RestRequest("jsonrpc/listgroups", DataFormat.Json);
+            var request = new RestRequest("jsonrpc/listgroups", Method.Get);
 
-            var response = client.Get<NzbgetResult<List<NzbgetQueue>>>(request);
-            return response?.Data?.Result;
+            var response = client.GetAsync<NzbgetResult<List<NzbgetQueue>>>(request).GetAwaiter().GetResult();
+            return response.Result;
         }
 
         public List<NzbgetHistory> GetHistory()
         {
-            var request = new RestRequest("jsonrpc/history", DataFormat.Json);
+            var request = new RestRequest("jsonrpc/history", Method.Get);
 
-            var response = client.Get<NzbgetResult<List<NzbgetHistory>>>(request);
-            var data = response.Data;
+            var response = client.GetAsync<NzbgetResult<List<NzbgetHistory>>>(request).GetAwaiter().GetResult();
+            var data = response;
 
             return data?.Result;
         }
@@ -93,7 +115,7 @@ namespace pdbMate.Core
                 0,
                 "FORCE"
             };
-            var request = new RestRequest("jsonrpc/append", DataFormat.Json);
+            var request = new RestRequest("jsonrpc/append", Method.Post);
             request.AddJsonBody(new NzbgetRequestAddDownload()
             {
                 Method = "append",
@@ -101,8 +123,8 @@ namespace pdbMate.Core
                 Params = paramsArray
             });
 
-            var response = client.Post<NzbgetResultAddDownload>(request);
-            if (response.Data.Result > 0)
+            var response = client.PostAsync<NzbgetResultAddDownload>(request).GetAwaiter().GetResult();
+            if (response.Result > 0)
             {
                 return true;
             }
@@ -110,9 +132,22 @@ namespace pdbMate.Core
             return false;
         }
 
-        public bool IsActive()
+        private void ValidateSettings()
         {
-            return options.IsActive;
+            if (string.IsNullOrWhiteSpace(options.Hostname))
+            {
+                throw new ArgumentException("Hostname for nzbget is empty.");
+            }
+
+            if (options.Hostname.StartsWith("http"))
+            {
+                throw new ArgumentException($"Given hostname {options.Hostname} should not contain http oder https. Valid example: myapp.mydomain.com or 176.56.59.1");
+            }
+
+            if (options.Port == 0)
+            {
+                throw new ArgumentException($"Please provide a valid port for nzbget.");
+            }
         }
     }
 }

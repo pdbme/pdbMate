@@ -7,8 +7,7 @@ namespace pdbMate.Core
 {
     public interface INzbgetService
     {
-        bool IsActive();
-        bool CheckConnection();
+        void CheckConnection();
         int GetVersion();
         List<NzbgetQueue> GetQueue();
         List<NzbgetHistory> GetHistory();

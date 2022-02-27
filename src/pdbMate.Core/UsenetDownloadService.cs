@@ -32,8 +32,10 @@ namespace pdbMate.Core
             this.videoMatching = videoMatching;
         }
 
-        public void Execute(bool dryRun)
+        public void Execute(bool dryRun, DownloadClient client)
         {
+            PreFlightCheck(client);
+
             var knownVideosOnDisk = renameService.GetKnownVideoQualityResults();
             var favoriteSites = options.DownloadFavoriteSites ? pdbApiService.GetFavoriteSites() : null;
             var favoriteActors = options.DownloadFavoriteActors ? pdbApiService.GetFavoriteActors() : null;
@@ -69,9 +71,7 @@ namespace pdbMate.Core
                 logger.LogInformation($"{resultList.Count} releases after Filter: keep only highest quality release.");
             }
 
-            var excludeReleases = new List<UsenetRelease>();
-            excludeReleases.AddRange(GetReleasesToExcludeFromSabnzbd(resultList));
-            excludeReleases.AddRange(GetReleasesToExcludeFromNzbget(resultList));
+            var excludeReleases = GetReleasesToExcludeFromDownloadClient(resultList, client);
 
             var excludeReleasesIds = excludeReleases.Select(x => x.Id);
             resultList.RemoveAll(x => excludeReleasesIds.Contains(x.Id));
@@ -83,7 +83,7 @@ namespace pdbMate.Core
             logger.LogInformation($"-- List releases to add");
             
 
-            if (options.AddNzbTo.Equals("nzbget"))
+            if (client.Equals(DownloadClient.Nzbget))
             {
                 foreach (var result in resultList)
                 {
@@ -96,7 +96,7 @@ namespace pdbMate.Core
                     }
                 }
             } 
-            else if (options.AddNzbTo.Equals("sabnzbd"))
+            else if (client.Equals(DownloadClient.Sabnzbd))
             {
                 foreach (var result in resultList)
                 {
@@ -111,9 +111,24 @@ namespace pdbMate.Core
             }
             else
             {
-                throw new ApplicationException($"No valid entry for AddNzbTo, given: {options.AddNzbTo} - expected: sabnzbd or nzbget");
+                throw new NotImplementedException();
             }
             logger.LogInformation($"-----------------------");
+        }
+
+        private void PreFlightCheck(DownloadClient client)
+        {
+            switch (client)
+            {
+                case DownloadClient.Nzbget:
+                    nzbgetService.CheckConnection();
+                    break;
+                case DownloadClient.Sabnzbd:
+                    sabnzbdService.CheckConnection();
+                    break;
+                default:
+                    throw new ApplicationException($"Please specify a valid download client - given: {client} - expected: sabnzbd or nzbget");
+            }
         }
 
         private string GetDownloadLink(UsenetRelease release)
@@ -152,15 +167,24 @@ namespace pdbMate.Core
             return result;
         }
 
+        private List<UsenetRelease> GetReleasesToExcludeFromDownloadClient(List<UsenetRelease> resultList, DownloadClient client)
+        {
+            var excludeReleases = new List<UsenetRelease>();
+            if (client.Equals(DownloadClient.Nzbget))
+            {
+                excludeReleases.AddRange(GetReleasesToExcludeFromNzbget(resultList));
+            }
+            if (client.Equals(DownloadClient.Sabnzbd))
+            {
+                excludeReleases.AddRange(GetReleasesToExcludeFromSabnzbd(resultList));
+            }
+            return excludeReleases;
+        }
 
         private List<UsenetRelease> GetReleasesToExcludeFromSabnzbd(List<UsenetRelease> releases)
         {
             // All releases found in queue must be excluded from releases list
             List<UsenetRelease> excludeReleases = new List<UsenetRelease>();
-            if (!sabnzbdService.IsActive())
-            {
-                return excludeReleases;
-            }
 
             var slots = sabnzbdService.GetQueue(0, 1000).Slots;
             foreach (var slot in slots)
@@ -203,10 +227,6 @@ namespace pdbMate.Core
         {
             // All releases found in queue must be excluded from releases list
             List<UsenetRelease> excludeReleases = new List<UsenetRelease>();
-            if (!nzbgetService.IsActive())
-            {
-                return excludeReleases;
-            }
 
             var queueEntries = nzbgetService.GetQueue();
             if (queueEntries == null || queueEntries.Count == 0)

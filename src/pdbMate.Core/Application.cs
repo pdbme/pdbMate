@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
+using pdbMate.Core.Data;
 
 namespace pdbMate.Core
 {
@@ -7,20 +8,18 @@ namespace pdbMate.Core
     {
         private readonly ILogger<IApplication> logger;
         private readonly IRenameService renameService;
-        private readonly INzbgetService nzbgetService;
-        private readonly ISabnzbdService sabnzbdService;
         private readonly IFileOperatingService fileOperatingService;
         private readonly IUsenetDownloadService usenetDownloadService;
+        private readonly IChangeNamingTemplateService changeNamingTemplateService;
 
         public Application(ILogger<IApplication> logger, IRenameService renameService, IFileOperatingService fileOperatingService,
-            INzbgetService nzbgetService, ISabnzbdService sabnzbdService, IUsenetDownloadService usenetDownloadService)
+            IUsenetDownloadService usenetDownloadService, IChangeNamingTemplateService changeNamingTemplateService)
         {
             this.logger = logger;
             this.renameService = renameService;
             this.fileOperatingService = fileOperatingService;
-            this.nzbgetService = nzbgetService;
-            this.sabnzbdService = sabnzbdService;
             this.usenetDownloadService = usenetDownloadService;
+            this.changeNamingTemplateService = changeNamingTemplateService;
         }
 
         public bool Rename(bool dryRun)
@@ -42,39 +41,44 @@ namespace pdbMate.Core
             return true;
         }
 
-        public bool Test(bool dryRun)
+        public bool Download(bool dryRun, string client)
         {
-            return true;
-        }
+            var downloadClient = GetClientFromString(client);
 
-        public bool Download(bool dryRun)
-        {
-            /*
-            nzbgetService.CheckConnection(); 
-            var result = nzbgetService.GetQueue();
-            logger.LogInformation($"Found in queue: {result.Count} entries.");
-            var resultHistory = nzbgetService.GetHistory();
-            logger.LogInformation($"Found in history: {resultHistory.Count} entries.");
-            */
-
-            /*
-            sabnzbdService.CheckConnection();
-            var resultSabnzbd = sabnzbdService.GetQueue(0, 100);
-            logger.LogInformation($"Found in sabnzbd queue: {resultSabnzbd.Slots.Count} entries.");
-            var resultSabnzbdHistory = sabnzbdService.GetHistory(0, 100);
-            logger.LogInformation($"Found in sabnzbd history: {resultSabnzbdHistory?.Slots?.Count} entries.");
-            */
-
-            usenetDownloadService.Execute(dryRun);
+            usenetDownloadService.Execute(dryRun, downloadClient);
 
             return true;
         }
 
-        public bool Autopilot(bool dryRun)
+        public bool Autopilot(bool dryRun, string client)
         {
+            var downloadClient = GetClientFromString(client);
+
             Rename(dryRun);
-            Download(dryRun);
+            usenetDownloadService.Execute(dryRun, downloadClient);
 
+            return true;
+        }
+
+        private DownloadClient GetClientFromString(string s)
+        {
+            s = s.Trim().ToLower();
+            if (s.Equals("nzbget"))
+            {
+                return DownloadClient.Nzbget;
+            }
+
+            if (s.Equals("sabnzbd"))
+            {
+                return DownloadClient.Sabnzbd;
+            }
+
+            throw new ApplicationException($"Please specify a valid download client - given: {s} - expected: sabnzbd or nzbget");
+        }
+
+        public bool ChangeNamingTemplate(bool dryRun)
+        {
+            changeNamingTemplateService.RenameToNewTemplate(dryRun);
             return true;
         }
     }

@@ -384,7 +384,7 @@ namespace pdbMate.Core
             return videos;
         }
 
-        private string ReplaceTemplatePlaceholders(string template, RenamerResult v)
+        public string ReplaceTemplatePlaceholders(string template, RenamerResult v)
         {
             string r = template;
             r = r.Replace("{Video.Site.Sitename}", v.Video.Site.Sitename);

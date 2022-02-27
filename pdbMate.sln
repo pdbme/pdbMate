@@ -1,13 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pdbMate", "src\pdbMate\pdbMate.csproj", "{1F218E0B-563D-4502-97FB-869D4427DE7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pdbMate.Core", "src\pdbMate.Core\pdbMate.Core.csproj", "{A8539E9E-8391-4C1A-9418-B56E41DF93D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pdbMate.Core", "src\pdbMate.Core\pdbMate.Core.csproj", "{A8539E9E-8391-4C1A-9418-B56E41DF93D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pdbMate.Core.Tests", "tests\pdbMate.Core.Tests\pdbMate.Core.Tests.csproj", "{AFFB29F6-04C9-4555-B9CC-2CFB69584C31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pdbMate.Core.Tests", "tests\pdbMate.Core.Tests\pdbMate.Core.Tests.csproj", "{AFFB29F6-04C9-4555-B9CC-2CFB69584C31}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{53E44897-2505-4E67-8770-1DEE9611D83C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
