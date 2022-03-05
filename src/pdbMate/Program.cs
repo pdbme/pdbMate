@@ -6,8 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using pdbMate.Commands;
 using pdbMate.Core;
-using pdbMate.Infrastructure;
 using pdbMate.SetupLogic;
+using pdbme.VerySimpleConsoleLogger;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -88,7 +88,7 @@ namespace pdbMate
             services.AddLogging(opt =>
             {
                 opt.SetMinimumLevel(isVerbose ? LogLevel.Debug : LogLevel.Information);
-                opt.AddMateConsoleLogger();
+                opt.AddVerySimpleConsoleLogger();
             });
 
             services.AddPdbApiService(_configuration.GetSection("PdbApi"));

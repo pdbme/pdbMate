@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="Spectre.Cli.Extensions.DependencyInjection" Version="0.4.0" />
+    <PackageReference Include="pdbme.VerySimpleConsoleLogger" Version="1.0.0" />
     <PackageReference Include="Spectre.Console" Version="0.43.0" />
   </ItemGroup>
 
