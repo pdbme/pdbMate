@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using pdbMate.Core.Data;
+using System.Collections.Generic;
 
 namespace pdbMate.Core
 {
@@ -8,5 +9,6 @@ namespace pdbMate.Core
         public bool KeepOnlyHighestQuality { get; set; }
         public bool DownloadFavoriteActors { get; set; }
         public bool DownloadFavoriteSites { get; set; }
+        public DownloadClient ActiveClient  { get; set; }
     }
 }

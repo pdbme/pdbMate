@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using pdbMate.Core.Data;
 
-namespace pdbMate.Core
+namespace pdbMate.Core.Interfaces
 {
     public interface IRenameService
     {

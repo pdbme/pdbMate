@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using pdbMate.Core.Data;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {

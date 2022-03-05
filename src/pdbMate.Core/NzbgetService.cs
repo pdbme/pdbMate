@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pdbMate.Core.Data.Nzbget;
+using pdbMate.Core.Interfaces;
 using RestSharp;
 using RestSharp.Authenticators;
 using RestSharp.Serializers.Json;
@@ -15,14 +16,19 @@ namespace pdbMate.Core
     public class NzbgetService : INzbgetService
     {
         private readonly ILogger<INzbgetService> logger;
-        private readonly NzbgetServiceOptions options;
-        private readonly RestClient client;
-        private readonly string baseUrl;
+        private NzbgetServiceOptions options;
+        private RestClient client;
 
         public NzbgetService(ILogger<INzbgetService> logger, IOptions<NzbgetServiceOptions> options)
         {
             this.logger = logger;
-            this.options = options.Value;
+
+            setOptions(options);
+        }
+
+        public void setOptions(IOptions<NzbgetServiceOptions> optionsToSet)
+        {
+            options = optionsToSet.Value;
 
             var authString = "";
             if (!string.IsNullOrEmpty(this.options.Username) && !string.IsNullOrEmpty(this.options.Password))
@@ -35,7 +41,7 @@ namespace pdbMate.Core
                 return;
             }
 
-            baseUrl = (this.options.UseHttps ? "https://" : "http://") + authString + this.options.Hostname + ":" +
+            var baseUrl = (this.options.UseHttps ? "https://" : "http://") + authString + this.options.Hostname + ":" +
                           this.options.Port;
 
             client = new RestClient(baseUrl);
@@ -45,12 +51,11 @@ namespace pdbMate.Core
                 WriteIndented = true
             });
 
-            if(!string.IsNullOrEmpty(this.options.Username) || !string.IsNullOrEmpty(this.options.Password))
+            if (!string.IsNullOrEmpty(this.options.Username) || !string.IsNullOrEmpty(this.options.Password))
             {
                 client.Authenticator = new HttpBasicAuthenticator(this.options.Username, this.options.Password);
             }
         }
-
 
         public void CheckConnection()
         {

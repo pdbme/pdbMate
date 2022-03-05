@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using pdbMate.Core.Data;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {

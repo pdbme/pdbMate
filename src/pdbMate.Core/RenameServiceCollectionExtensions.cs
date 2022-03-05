@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {
@@ -17,6 +18,7 @@ namespace pdbMate.Core
             services.AddScoped<IDuplicateFinder, DuplicateFinder>();
             services.Configure<RenameServiceOptions>(config);
             services.AddScoped<IChangeNamingTemplateService, ChangeNamingTemplateService>();
+            services.AddScoped<IRenameWorkflow, RenameWorkflow>();
 
             return services;
         }

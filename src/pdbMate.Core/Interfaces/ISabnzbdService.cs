@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
-using pdbMate.Core.Data.Nzbget;
+﻿using Microsoft.Extensions.Options;
 using pdbMate.Core.Data.Sabnzbd;
 
-namespace pdbMate.Core
+namespace pdbMate.Core.Interfaces
 {
     public interface ISabnzbdService
     {
+        void setOptions(IOptions<SabnzbdServiceOptions> optionsToSet);
         bool CheckConnection();
         string GetVersion();
         bool AddDownload(string url);

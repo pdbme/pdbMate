@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {

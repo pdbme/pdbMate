@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pdbMate.Core.Data.Sabnzbd;
+using pdbMate.Core.Interfaces;
 using RestSharp;
 using RestSharp.Serializers.Json;
 
@@ -12,23 +13,26 @@ namespace pdbMate.Core
     public class SabnzbdService : ISabnzbdService
     {
         private readonly ILogger<ISabnzbdService> logger;
-        private readonly SabnzbdServiceOptions options;
-        private readonly RestClient client;
-        private readonly string baseUrl;
+        private SabnzbdServiceOptions options;
+        private RestClient client;
 
         public SabnzbdService(ILogger<ISabnzbdService> logger, IOptions<SabnzbdServiceOptions> options)
         {
             this.logger = logger;
-            this.options = options.Value;
 
-            baseUrl = this.options.Url;
+            setOptions(options);
+        }
 
-            if (string.IsNullOrEmpty(baseUrl))
+        public void setOptions(IOptions<SabnzbdServiceOptions> optionsToSet)
+        {
+            options = optionsToSet.Value;
+
+            if (string.IsNullOrEmpty(options.Url))
             {
                 return;
             }
 
-            client = new RestClient(baseUrl);
+            client = new RestClient(options.Url);
             client.UseSystemTextJson(new JsonSerializerOptions()
             {
                 PropertyNameCaseInsensitive = true,
@@ -39,7 +43,7 @@ namespace pdbMate.Core
         public bool CheckConnection()
         {
             var version = GetVersion();
-            logger.LogInformation($"Connection to {baseUrl} was {(string.IsNullOrEmpty(version) ? "not successful" : "successful")} - Version: {version}");
+            logger.LogInformation($"Connection to {options.Url} was {(string.IsNullOrEmpty(version) ? "not successful" : "successful")} - Version: {version}");
             return !string.IsNullOrEmpty(version);
         }
 

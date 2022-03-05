@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pdbMate.Core.Data;
+using pdbMate.Core.Interfaces;
 using RestSharp;
 
 namespace pdbMate.Core
@@ -11,9 +12,9 @@ namespace pdbMate.Core
     public class PdbApiService : IPdbApiService
     {
         private readonly ILogger<IPdbApiService> logger;
-        private readonly PdbApiServiceOptions options;
-        private readonly RestClient client;
-
+        
+        private RestClient client;
+        private PdbApiServiceOptions options;
         private List<Site> cachedSites;
         private List<UsenetIndexer> cachedIndexers;
         private readonly Dictionary<int,List<Video>> cachedVideos;
@@ -21,12 +22,20 @@ namespace pdbMate.Core
         public PdbApiService(ILogger<IPdbApiService> logger, IOptions<PdbApiServiceOptions> options)
         {
             this.logger = logger;
-            this.options = options.Value;
-
-            client = new RestClient(this.options.BaseUrl);
-            client.AddDefaultHeader("X-PORNDB-APIKEY", this.options.Apikey);
+            setOptions(options);
 
             cachedVideos = new Dictionary<int, List<Video>>();
+        }
+
+        public void setOptions(IOptions<PdbApiServiceOptions> optionsToSet)
+        {
+            options = optionsToSet.Value;
+
+            if (options != null && !string.IsNullOrEmpty(options.BaseUrl))
+            {
+                client = new RestClient(options.BaseUrl);
+                client.AddDefaultHeader("X-PORNDB-APIKEY", options.Apikey);
+            }
         }
 
         public List<VideoQuality> GetAllVideoQuality()

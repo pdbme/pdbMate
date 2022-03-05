@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pdbMate.Core.Data;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {

@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pdbMate.Core.Data;
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core
 {
@@ -32,36 +33,40 @@ namespace pdbMate.Core
             this.videoMatching = videoMatching;
         }
 
-        public void Execute(bool dryRun, DownloadClient client)
+        public void Execute(bool dryRun, DownloadClient? overrideActiveClient, int? backFillingActors, int? backFillingSites)
         {
+            var client = options.ActiveClient;
+            if (overrideActiveClient != null)
+            {
+                client = overrideActiveClient.GetValueOrDefault(DownloadClient.Sabnzbd);
+            }
+
             PreFlightCheck(client);
 
-            var knownVideosOnDisk = renameService.GetKnownVideoQualityResults();
-            var favoriteSites = options.DownloadFavoriteSites ? pdbApiService.GetFavoriteSites() : null;
-            var favoriteActors = options.DownloadFavoriteActors ? pdbApiService.GetFavoriteActors() : null;
-            var releases = pdbApiService.GetReleases(1, 1000, 0, 0, "");
-            var myIndexers = pdbApiService.GetMyIndexer();
-
-            if(releases == null || !releases.Any())
-            {
-                logger.LogError("No releases found");
-                return;
-            }
-
             var resultList = new List<UsenetRelease>();
-            foreach (var release in releases)
-            {
-                release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));
-                bool matchActor = favoriteActors != null && options.DownloadFavoriteActors && favoriteActors.Any(x => x.Id == release.Actor1 || x.Id == release.Actor2);
-                bool matchSite = favoriteSites != null && options.DownloadFavoriteSites && favoriteSites.Any(x => x.Id == release.Site);
+            var knownVideosOnDisk = renameService.GetKnownVideoQualityResults();
 
-                if (myIndexers.Any(x => x.Id == release.Indexer) && (matchActor || matchSite) && !IsDuplicate(release, knownVideosOnDisk))
+            if (backFillingActors != null || backFillingSites != null)
+            {
+                if(backFillingActors != null)
                 {
-                    logger.LogDebug($"Add {release.Title} to resultlist.");
-                    resultList.Add(release);
+                    resultList.AddRange(GetBackfillingActors(backFillingActors.GetValueOrDefault(0), knownVideosOnDisk));
+                }
+
+                if (backFillingSites != null)
+                {
+                    resultList.AddRange(GetBackfillingSites(backFillingSites.GetValueOrDefault(0), knownVideosOnDisk));
                 }
             }
-            logger.LogInformation($"{resultList.Count} releases found.");
+            else
+            {
+                resultList.AddRange(GetLatestReleases());
+            }
+
+            if (resultList == null || resultList.Count == 0)
+            {
+                return;
+            }
 
             if (options.KeepOnlyHighestQuality)
             {
@@ -116,6 +121,126 @@ namespace pdbMate.Core
             logger.LogInformation($"-----------------------");
         }
 
+        private List<UsenetRelease> GetLatestReleases()
+        {
+            var knownVideosOnDisk = renameService.GetKnownVideoQualityResults();
+            var favoriteSites = options.DownloadFavoriteSites ? pdbApiService.GetFavoriteSites() : null;
+            var favoriteActors = options.DownloadFavoriteActors ? pdbApiService.GetFavoriteActors() : null;
+            var releases = pdbApiService.GetReleases(1, 1000, 0, 0, "");
+            var myIndexers = pdbApiService.GetMyIndexer();
+
+            if (releases == null || !releases.Any())
+            {
+                logger.LogError("No releases found");
+                return null;
+            }
+
+            var resultList = new List<UsenetRelease>();
+            foreach (var release in releases)
+            {
+                release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));
+                bool matchActor = favoriteActors != null && options.DownloadFavoriteActors && favoriteActors.Any(x => x.Id == release.Actor1 || x.Id == release.Actor2);
+                bool matchSite = favoriteSites != null && options.DownloadFavoriteSites && favoriteSites.Any(x => x.Id == release.Site);
+
+                if (myIndexers.Any(x => x.Id == release.Indexer) && (matchActor || matchSite) && !IsDuplicate(release, knownVideosOnDisk, resultList))
+                {
+                    logger.LogDebug($"Add {release.Title} to resultlist.");
+                    resultList.Add(release);
+                }
+            }
+            logger.LogInformation($"{resultList.Count} releases found.");
+
+            return resultList;
+        }
+
+        private List<UsenetRelease> GetBackfillingSites(int backFillingSites, List<KnownVideoQualityResult> knownVideosOnDisk)
+        {
+            var favoriteSites = new List<Site>();
+
+            if (backFillingSites == 0)
+            {
+                favoriteSites.AddRange(pdbApiService.GetFavoriteSites());
+            }
+            else
+            {
+                favoriteSites.Add(new Site() { Id = backFillingSites });
+            }
+
+            var resultList = new List<UsenetRelease>();
+            var myIndexers = pdbApiService.GetMyIndexer();
+            var myIndexersInts = myIndexers.Select(x => x.Id).ToList();
+
+            foreach (var site in favoriteSites)
+            {
+                var releases = pdbApiService.GetReleases(1, 5000, 0, site.Id, "");
+
+                if (releases == null || !releases.Any())
+                {
+                    logger.LogError("No releases found");
+                    return null;
+                }
+
+                var foundReleasess = releases.Where(x => x.Site == site.Id && myIndexersInts.Contains(x.Indexer));
+                foreach (var release in foundReleasess)
+                {
+                    release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));
+
+                    if (!IsDuplicate(release, knownVideosOnDisk, resultList))
+                    {
+                        logger.LogInformation($"Add {release.Title} to resultlist.");
+                        resultList.Add(release);
+                    }
+                }
+                logger.LogInformation($"{resultList.Count} releases added for site id: {site.Id}.");
+            }
+
+            return resultList;
+        }
+
+        private List<UsenetRelease> GetBackfillingActors(int backFillingActors, List<KnownVideoQualityResult> knownVideosOnDisk)
+        {
+            var favoriteActors = new List<Actor>();
+
+            if(backFillingActors == 0)
+            {
+                favoriteActors.AddRange(pdbApiService.GetFavoriteActors());
+            }
+            else
+            {
+                favoriteActors.Add(new Actor() { Id = backFillingActors });
+            }
+
+            var resultList = new List<UsenetRelease>();
+            var myIndexers = pdbApiService.GetMyIndexer();
+            var myIndexersInts = myIndexers.Select(x => x.Id).ToList();
+
+            foreach (var actor in favoriteActors)
+            {
+                var releases = pdbApiService.GetReleases(1, 5000, actor.Id, 0, "");
+
+                if (releases == null || !releases.Any())
+                {
+                    logger.LogError("No releases found");
+                    return null;
+                }
+
+                var foundReleasess = releases.Where(x => (x.Actor1 == actor.Id || x.Actor2 == actor.Id) && myIndexersInts.Contains(x.Indexer));
+                foreach (var release in foundReleasess)
+                {
+                    release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));
+
+                    if (!IsDuplicate(release, knownVideosOnDisk, resultList))
+                    {
+                        logger.LogDebug($"Add {release.Title} to resultlist.");
+                        resultList.Add(release);
+                    }
+                }
+                logger.LogInformation($"{resultList.Count} releases added for actor id: {actor.Id}.");
+            }
+
+            return resultList;
+        }
+
         private void PreFlightCheck(DownloadClient client)
         {
             switch (client)
@@ -147,6 +272,24 @@ namespace pdbMate.Core
 
         private List<UsenetRelease> RemoveDuplicates(List<UsenetRelease> releases)
         {
+            var groupByVideoId = releases.GroupBy(x => x.Video);
+            //Using Query Syntax
+            //IEnumerable<IGrouping<string, Student>> GroupByQS = (from std in Student.GetStudents()
+            //                                                     group std by std.Barnch);
+            //It will iterate through each groups
+            List<UsenetRelease> filteredList = new List<UsenetRelease>();
+            foreach (var videoIdGroup in groupByVideoId)
+            {
+                var videoId = videoIdGroup.Key;
+                var videoWithBestQuality = videoIdGroup.OrderByDescending(x => x.VideoQuality.BetterQualityOrdinal).FirstOrDefault();
+                if(videoWithBestQuality != null)
+                {
+                    filteredList.Add(videoWithBestQuality);
+                }
+            }
+
+            return filteredList;
+            /*
             var result = new List<UsenetRelease>();
             var known = new List<KnownVideoQualityResult>();
             foreach (var r in releases)
@@ -163,8 +306,8 @@ namespace pdbMate.Core
                 });
                 result.Add(r);
             }
-
-            return result;
+            
+            return result;*/
         }
 
         private List<UsenetRelease> GetReleasesToExcludeFromDownloadClient(List<UsenetRelease> resultList, DownloadClient client)
@@ -290,7 +433,7 @@ namespace pdbMate.Core
             return true;
         }
 
-        private bool IsDuplicate(UsenetRelease release, List<KnownVideoQualityResult> knownVideosOnDisk)
+        private bool IsDuplicate(UsenetRelease release, List<KnownVideoQualityResult> knownVideosOnDisk, List<UsenetRelease> releasesAlreadyInList)
         {
             if (!IsQualityAllowed(release))
             {
@@ -302,12 +445,20 @@ namespace pdbMate.Core
                 return true; // release in exactly the quality is on disk
             }
 
+            if(releasesAlreadyInList.Any(x => x.Video == release.Video && x.VideoQuality.Id == release.VideoQuality.Id))
+            {
+                return true;
+            }
+
             if (options.KeepOnlyHighestQuality)
             {
                 var betterQualities = GetBetterQualitiesThan(release.VideoQuality.Id);
-                if (betterQualities != null && betterQualities.Any() && knownVideosOnDisk.Any(x => x.VideoId == release.Video && betterQualities.Contains(x.VideoQualityId)))
+                if (betterQualities != null && betterQualities.Any() && 
+                    knownVideosOnDisk.Any(x => x.VideoId == release.Video && betterQualities.Contains(x.VideoQualityId)) &&
+                    releasesAlreadyInList.Any(x => x.Video == release.Video && betterQualities.Contains(x.VideoQuality.Id))
+                    )
                 {
-                    return true; // release in a higher quality is on disk
+                    return true; // release in a higher quality is on disk or in list
                 }
             }
 

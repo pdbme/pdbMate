@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-
+using pdbMate.Core.Interfaces;
 
 namespace pdbMate.Core.Tests
 {

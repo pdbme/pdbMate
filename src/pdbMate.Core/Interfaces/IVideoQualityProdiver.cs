@@ -1,6 +1,6 @@
 ﻿using pdbMate.Core.Data;
 
-namespace pdbMate.Core
+namespace pdbMate.Core.Interfaces
 {
     public interface IVideoQualityProdiver
     {
