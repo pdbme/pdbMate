@@ -50,17 +50,29 @@ namespace pdbMate.Core
             {
                 if(backFillingActors != null)
                 {
-                    resultList.AddRange(GetBackfillingActors(backFillingActors.GetValueOrDefault(0), knownVideosOnDisk));
+                    var usenetReleases = GetBackfillingActors(backFillingActors.GetValueOrDefault(0), knownVideosOnDisk);
+                    if(usenetReleases != null)
+                    {
+                        resultList.AddRange(usenetReleases);
+                    }
                 }
 
                 if (backFillingSites != null)
                 {
-                    resultList.AddRange(GetBackfillingSites(backFillingSites.GetValueOrDefault(0), knownVideosOnDisk));
+                    var usenetReleases = GetBackfillingSites(backFillingSites.GetValueOrDefault(0), knownVideosOnDisk);
+                    if (usenetReleases != null)
+                    {
+                        resultList.AddRange(usenetReleases);
+                    }
                 }
             }
             else
             {
-                resultList.AddRange(GetLatestReleases());
+                var usenetReleases = GetLatestReleases();
+                if(usenetReleases != null)
+                {
+                    resultList.AddRange(usenetReleases);
+                }
             }
 
             if (resultList == null || resultList.Count == 0)
@@ -315,11 +327,19 @@ namespace pdbMate.Core
             var excludeReleases = new List<UsenetRelease>();
             if (client.Equals(DownloadClient.Nzbget))
             {
-                excludeReleases.AddRange(GetReleasesToExcludeFromNzbget(resultList));
+                var usenetReleases = GetReleasesToExcludeFromNzbget(resultList);
+                if (usenetReleases != null)
+                {
+                    excludeReleases.AddRange(usenetReleases);
+                }
             }
             if (client.Equals(DownloadClient.Sabnzbd))
             {
-                excludeReleases.AddRange(GetReleasesToExcludeFromSabnzbd(resultList));
+                var usenetReleases = GetReleasesToExcludeFromSabnzbd(resultList);
+                if(usenetReleases != null)
+                {
+                    excludeReleases.AddRange(usenetReleases);
+                }
             }
             return excludeReleases;
         }
@@ -339,7 +359,7 @@ namespace pdbMate.Core
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();
-                    if (releasesFound.Any())
+                    if (releasesFound != null && releasesFound.Any())
                     {
                         excludeReleases.AddRange(releasesFound);
                     }
@@ -356,7 +376,7 @@ namespace pdbMate.Core
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();
-                    if (releasesFound.Any())
+                    if (releasesFound != null && releasesFound.Any())
                     {
                         excludeReleases.AddRange(releasesFound);
                     }
@@ -386,7 +406,7 @@ namespace pdbMate.Core
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();
-                    if (releasesFound.Any())
+                    if (releasesFound != null && releasesFound.Any())
                     {
                         excludeReleases.AddRange(releasesFound);
                     }
@@ -408,7 +428,7 @@ namespace pdbMate.Core
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();
-                    if (releasesFound.Any())
+                    if (releasesFound != null && releasesFound.Any())
                     {
                         excludeReleases.AddRange(releasesFound);
                     }
