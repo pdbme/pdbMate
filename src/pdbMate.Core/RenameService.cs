@@ -175,7 +175,7 @@ namespace pdbMate.Core
             if (!Directory.Exists(targetFolder))
             {
                 logger.LogError($"Target directory {targetFolder} does not exist.");
-                return null;
+                return new List<KnownVideoQualityResult>();
             }
 
             var files = Directory.EnumerateFiles(targetFolder, "*.*", SearchOption.AllDirectories).ToList();

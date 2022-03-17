@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using pdbMate.Commands;
 using pdbMate.Core;
 using pdbMate.SetupLogic;
-using pdbme.VerySimpleConsoleLogger;
+using pdbme.pdbInfrastructure.DependencyInjection.Services;
+using pdbme.pdbInfrastructure.Logging.Services;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -48,10 +51,15 @@ namespace pdbMate
             var app = new CommandApp(registrar);
             app.Configure(config =>
             {
-                if (isVerbose)
+                config.PropagateExceptions();
+
+                config.SetInterceptor(new LogInterceptor());
+
+                config.SetExceptionHandler(ex =>
                 {
-                    config.PropagateExceptions();
-                }
+                    Log.Logger.Error(ex.Message + " Stacktrace: " + ex.StackTrace);
+                    return -1;
+                });
 
                 config.AddCommand<RenameCommand>("rename")
                     .WithDescription("Rename and sort video files in subfolders by sitename.")
@@ -85,11 +93,26 @@ namespace pdbMate
 
             var services = new ServiceCollection();
             services.AddOptions();
+
+            services.AddLogging(opt =>
+            {
+                var loggerConfig = new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .MinimumLevel.ControlledBy(LogInterceptor.LogLevel)
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                    .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                    .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                    .CreateLogger();
+                opt.AddSerilog(loggerConfig);
+            });
+
+            /*
             services.AddLogging(opt =>
             {
                 opt.SetMinimumLevel(isVerbose ? LogLevel.Debug : LogLevel.Information);
                 opt.AddVerySimpleConsoleLogger();
             });
+            */
 
             services.AddPdbApiService(_configuration.GetSection("PdbApi"));
             services.AddRenameService(_configuration.GetSection("Rename"));
@@ -158,7 +181,28 @@ namespace pdbMate
                     argList.Add("0");
                 }
 
-                if(!doBackfillingForActors && !doBackfillingForSites)
+                var daysBack = AnsiConsole.Prompt(
+                    new TextPrompt<int>($"Enter the maximum [green]number of days[/] you want to go back and backfill:")
+                        .PromptStyle("green")
+                        .ValidationErrorMessage("[red]That's not a valid number of days[/]")
+                        .Validate(id =>
+                        {
+                            if (id == 0)
+                            {
+                                return ValidationResult.Error($"[red]Number of days should be more than 0[/]");
+                            }
+
+                            if (id > 1800)
+                            {
+                                return ValidationResult.Error($"[red]Number of days should be less than 1800[/]");
+                            }
+
+                            return ValidationResult.Success();
+                        }));
+                argList.Add("--daysback");
+                argList.Add(daysBack.ToString());
+
+                if (!doBackfillingForActors && !doBackfillingForSites)
                 {
                     var siteId = AnsiConsole.Prompt(
                     new TextPrompt<int>($"Enter [green]site id[/] you want to backfill (enter 0 to skip and continue with an actor id):")

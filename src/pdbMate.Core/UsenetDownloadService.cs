@@ -33,7 +33,7 @@ namespace pdbMate.Core
             this.videoMatching = videoMatching;
         }
 
-        public void Execute(bool dryRun, DownloadClient? overrideActiveClient, int? backFillingActors, int? backFillingSites)
+        public void Execute(bool dryRun, DownloadClient? overrideActiveClient, int? backFillingActors, int? backFillingSites, int daysBack)
         {
             var client = options.ActiveClient;
             if (overrideActiveClient != null)
@@ -50,18 +50,20 @@ namespace pdbMate.Core
             {
                 if(backFillingActors != null)
                 {
-                    var usenetReleases = GetBackfillingActors(backFillingActors.GetValueOrDefault(0), knownVideosOnDisk);
-                    if(usenetReleases != null)
+                    var usenetReleases = GetBackfillingActors(backFillingActors.GetValueOrDefault(0), knownVideosOnDisk, daysBack);
+                    if (usenetReleases != null)
                     {
+                        logger.LogInformation($"A total of {usenetReleases.Count}  actor-related releases were found.");
                         resultList.AddRange(usenetReleases);
                     }
                 }
 
                 if (backFillingSites != null)
                 {
-                    var usenetReleases = GetBackfillingSites(backFillingSites.GetValueOrDefault(0), knownVideosOnDisk);
+                    var usenetReleases = GetBackfillingSites(backFillingSites.GetValueOrDefault(0), knownVideosOnDisk, daysBack);
                     if (usenetReleases != null)
                     {
+                        logger.LogInformation($"A total of {usenetReleases.Count}  site-related releases were found.");
                         resultList.AddRange(usenetReleases);
                     }
                 }
@@ -77,8 +79,11 @@ namespace pdbMate.Core
 
             if (resultList == null || resultList.Count == 0)
             {
+                logger.LogError($"{resultList?.Count ?? -1} releases found. Exiting.");
                 return;
             }
+
+            logger.LogInformation($"A total of {resultList.Count} releases were found.");
 
             if (options.KeepOnlyHighestQuality)
             {
@@ -165,8 +170,9 @@ namespace pdbMate.Core
             return resultList;
         }
 
-        private List<UsenetRelease> GetBackfillingSites(int backFillingSites, List<KnownVideoQualityResult> knownVideosOnDisk)
+        private List<UsenetRelease> GetBackfillingSites(int backFillingSites, List<KnownVideoQualityResult> knownVideosOnDisk, int daysBack)
         {
+            var dateDaysBack = DateTime.Now.AddDays(-1 * daysBack);
             var favoriteSites = new List<Site>();
 
             if (backFillingSites == 0)
@@ -192,7 +198,7 @@ namespace pdbMate.Core
                     return null;
                 }
 
-                var foundReleasess = releases.Where(x => x.Site == site.Id && myIndexersInts.Contains(x.Indexer));
+                var foundReleasess = releases.Where(x => x.Site == site.Id && myIndexersInts.Contains(x.Indexer) && x.Created >= dateDaysBack);
                 foreach (var release in foundReleasess)
                 {
                     release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));
@@ -209,8 +215,9 @@ namespace pdbMate.Core
             return resultList;
         }
 
-        private List<UsenetRelease> GetBackfillingActors(int backFillingActors, List<KnownVideoQualityResult> knownVideosOnDisk)
+        private List<UsenetRelease> GetBackfillingActors(int backFillingActors, List<KnownVideoQualityResult> knownVideosOnDisk, int daysBack)
         {
+            var dateDaysBack = DateTime.Now.AddDays(-1 * daysBack);
             var favoriteActors = new List<Actor>();
 
             if(backFillingActors == 0)
@@ -233,10 +240,10 @@ namespace pdbMate.Core
                 if (releases == null || !releases.Any())
                 {
                     logger.LogError("No releases found");
-                    return null;
+                    continue;
                 }
 
-                var foundReleasess = releases.Where(x => (x.Actor1 == actor.Id || x.Actor2 == actor.Id) && myIndexersInts.Contains(x.Indexer));
+                var foundReleasess = releases.Where(x => (x.Actor1 == actor.Id || x.Actor2 == actor.Id) && myIndexersInts.Contains(x.Indexer) && x.Created >= dateDaysBack);
                 foreach (var release in foundReleasess)
                 {
                     release.VideoQuality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(release.Title));

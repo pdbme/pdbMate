@@ -29,7 +29,7 @@ namespace pdbMate.Commands
         public override int Execute(CommandContext context, Settings settings)
         {
             renameWorkflow.Rename(settings.DryRun);
-            usenetDownloadService.Execute(settings.DryRun, settings.Client, null, null);
+            usenetDownloadService.Execute(settings.DryRun, settings.Client, null, null, 0);
             return 0;
         }
     }

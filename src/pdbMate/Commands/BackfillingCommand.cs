@@ -29,11 +29,15 @@ namespace pdbMate.Commands
 
             [CommandOption("--site")]
             public int? Site { get; init; }
+
+            [CommandOption("--daysback")]
+            [DefaultValue(30)]
+            public int DaysBack { get; init; }
         }
 
         public override int Execute(CommandContext context, Settings settings)
         {
-            usenetDownloadService.Execute(settings.DryRun, settings.Client, settings.Actor, settings.Site);
+            usenetDownloadService.Execute(settings.DryRun, settings.Client, settings.Actor, settings.Site, settings.DaysBack);
             return 0;
         }
     }

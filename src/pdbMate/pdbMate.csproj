@@ -4,12 +4,15 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyVersion>0.3.0</AssemblyVersion>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="pdbme.VerySimpleConsoleLogger" Version="1.0.0" />
+    <PackageReference Include="pdbme.pdbInfrastructure" Version="1.0.3" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="Spectre.Console" Version="0.43.0" />
   </ItemGroup>
 
