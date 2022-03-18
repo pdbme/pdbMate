@@ -1,4 +1,5 @@
 ﻿using pdbMate.SetupLogic;
+using pdbme.pdbInfrastructure.Logging.Commands;
 using Spectre.Console.Cli;
 using System;
 
@@ -13,7 +14,7 @@ namespace pdbMate.Commands
             this.setup = setup ?? throw new ArgumentNullException(nameof(setup));
         }
 
-        public class Settings : CommandSettings
+        public class Settings : LogCommandSettings
         {
         }
 

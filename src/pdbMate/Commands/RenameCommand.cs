@@ -1,4 +1,5 @@
 ﻿using pdbMate.Core.Interfaces;
+using pdbme.pdbInfrastructure.Logging.Commands;
 using Spectre.Console.Cli;
 using System.ComponentModel;
 
@@ -13,7 +14,7 @@ namespace pdbMate.Commands
             this.renameWorkflow = renameWorkflow;
         }
 
-        public class Settings : CommandSettings
+        public class Settings : LogCommandSettings
         {
             [CommandOption("-d|--dryrun")]
             [DefaultValue(false)]

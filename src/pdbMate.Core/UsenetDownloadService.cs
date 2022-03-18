@@ -410,6 +410,11 @@ namespace pdbMate.Core
                 if (videoFound != null)
                 {
                     var quality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(queueEntry.NzbName));
+                    if (quality == null)
+                    {
+                        logger.LogError("Quality not found for queue entry {nzbname}.", queueEntry.NzbName);
+                        continue;
+                    }
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();
@@ -432,6 +437,11 @@ namespace pdbMate.Core
                 if (videoFound != null)
                 {
                     var quality = videoQualityProdiver.GetByName(StringExtractor.ExtractQuality(historyEntry.NzbName));
+                    if(quality == null)
+                    {
+                        logger.LogError("Quality not found for history entry {nzbname}.", historyEntry.NzbName);
+                        continue;
+                    }
 
                     var releasesFound = releases
                         .Where(x => x.Video == videoFound.Id && x.VideoQuality.Id == quality.Id).ToList();

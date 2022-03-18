@@ -44,8 +44,7 @@ namespace pdbMate
 
         private static int RunWithArguments(string[] args)
         {
-            var isVerbose = IsVerbose(args);
-            var serviceCollections = ConfigureApp(isVerbose);
+            var serviceCollections = ConfigureApp();
             var registrar = new TypeRegistrar(serviceCollections);
 
             var app = new CommandApp(registrar);
@@ -84,7 +83,7 @@ namespace pdbMate
             return app.Run(args);
         }
 
-        private static ServiceCollection ConfigureApp(bool isVerbose)
+        private static ServiceCollection ConfigureApp()
         {
             _configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -103,16 +102,9 @@ namespace pdbMate
                     .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Level:u3}] {Message:lj}{NewLine}{Exception}")
                     .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                     .CreateLogger();
+
                 opt.AddSerilog(loggerConfig);
             });
-
-            /*
-            services.AddLogging(opt =>
-            {
-                opt.SetMinimumLevel(isVerbose ? LogLevel.Debug : LogLevel.Information);
-                opt.AddVerySimpleConsoleLogger();
-            });
-            */
 
             services.AddPdbApiService(_configuration.GetSection("PdbApi"));
             services.AddRenameService(_configuration.GetSection("Rename"));
@@ -122,19 +114,6 @@ namespace pdbMate
 
             services.AddScoped<ISetup, Setup>();
             return services;
-        }
-
-        private static bool IsVerbose(string[] args)
-        {
-            foreach (string arg in args)
-            {
-                if(arg == "--verbose" || arg == "-v")
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static string[] GetArgsByInteractiveMode()
@@ -150,10 +129,11 @@ namespace pdbMate
 
             argList.Add(action);
 
-            var isVerbose = AnsiConsole.Confirm("Run action in verbose logging mode?");
+            var isVerbose = AnsiConsole.Confirm("Run action in debug logging mode?");
             if (isVerbose)
             {
-                argList.Add("--verbose");
+                argList.Add("--loglevel");
+                argList.Add("d");
             }
 
             if (action == "rename" || action == "download" || action == "autopilot" || action == "backfilling")

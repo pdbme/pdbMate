@@ -1,5 +1,6 @@
 ﻿using pdbMate.Core.Data;
 using pdbMate.Core.Interfaces;
+using pdbme.pdbInfrastructure.Logging.Commands;
 using Spectre.Console.Cli;
 using System;
 using System.ComponentModel;
@@ -15,7 +16,7 @@ namespace pdbMate.Commands
             this.usenetDownloadService = usenetDownloadService ?? throw new ArgumentNullException(nameof(usenetDownloadService));
         }
 
-        public class Settings : CommandSettings
+        public class Settings : LogCommandSettings
         {
             [CommandOption("-d|--dryrun")]
             [DefaultValue(false)]
